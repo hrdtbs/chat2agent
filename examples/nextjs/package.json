@@ -1,0 +1,28 @@
+{
+  "name": "nextjs-chat2agent-example",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@chat-adapter/discord": "^4.24.0",
+    "@chat-adapter/slack": "^4.24.0",
+    "@chat-adapter/state-memory": "^4.24.0",
+    "@upstash/redis": "^1.35.0",
+    "chat": "^4.24.0",
+    "chat2agent": "workspace:*",
+    "next": "^15.2.4",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.14.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "typescript": "^5.7.3"
+  }
+}
