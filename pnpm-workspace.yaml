@@ -1,0 +1,7 @@
+packages:
+  - "packages/*"
+  - "examples/*"
+
+# pnpm 10.19+ — Next の optional ネイティブ依存 sharp の postinstall を許可
+onlyBuiltDependencies:
+  - sharp

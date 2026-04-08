@@ -1,0 +1,13 @@
+{
+  "name": "chat2agent-monorepo",
+  "private": true,
+  "packageManager": "pnpm@10.33.0",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "pnpm --filter chat2agent build",
+    "lint": "pnpm --filter chat2agent --filter nextjs-chat2agent-example lint",
+    "dev:example": "pnpm --filter nextjs-chat2agent-example dev"
+  }
+}
