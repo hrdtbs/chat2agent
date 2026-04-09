@@ -1,6 +1,6 @@
 import { ThreadImpl, type Thread } from "chat";
 import { runAgentSessionPoll, type Chat2AgentThreadState } from "chat2agent";
-import { createAgentBackends, getBot } from "@/lib/bot";
+import { createDevinClient, getBot } from "@/lib/bot";
 import { createPollQueue } from "@/lib/poll-queue";
 
 const MAX_DEQUEUE = 10;
@@ -33,7 +33,13 @@ export async function GET(request: Request) {
   }
 
   getBot();
-  const backends = createAgentBackends();
+  const devin = createDevinClient();
+  if (!devin) {
+    return Response.json(
+      { ok: false, error: "DEVIN_API_KEY / DEVIN_ORG_ID not configured" },
+      { status: 503 },
+    );
+  }
   let processed = 0;
 
   for (let i = 0; i < MAX_DEQUEUE; i++) {
@@ -42,7 +48,7 @@ export async function GET(request: Request) {
     const thread = ThreadImpl.fromJSON(
       serialized,
     ) as Thread<Chat2AgentThreadState>;
-    await runAgentSessionPoll(thread, backends, {
+    await runAgentSessionPoll(thread, devin, {
       intervalMs: Number(process.env.CHAT2AGENT_POLL_INTERVAL_MS ?? "3000"),
       maxIterations: Number(process.env.CHAT2AGENT_POLL_MAX_ITERATIONS ?? "40"),
     });

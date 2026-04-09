@@ -1,15 +1,12 @@
 import type { Message } from "chat";
 
-/** Which external coding agent receives the task. */
-export type AgentName = "devin" | "jules";
-
 export type Chat2AgentPhase =
   | "idle"
-  /** Collecting API-required fields (e.g. Jules source/branch) before createSession. */
+  /** Collecting API-required fields before createSession (optional integrator hook). */
   | "gathering_prereqs"
-  /** Session exists; polling Devin/Jules for user input or completion. */
+  /** Session exists; polling Devin for user input or completion. */
   | "agent_running"
-  /** We posted the agent's question in chat; waiting for the user's thread reply. */
+  /** We posted Devin's question in chat; waiting for the user's thread reply. */
   | "awaiting_agent_clarification"
   | "dispatched"
   | "aborted";
@@ -24,39 +21,14 @@ export interface Chat2AgentThreadState {
   accumulatedPrompt: string;
   /** How many prereq prompts we have posted before createSession. */
   clarificationPromptsPosted: number;
-  /** Arbitrary key/value slots (repo, branch, etc.). */
+  /** Arbitrary key/value slots (e.g. `devin_repos`). */
   slots: Record<string, string>;
-  selectedAgent: AgentName | null;
-  /** Devin session id (e.g. devin-…) or Jules session id after createSession. */
+  /** Devin session id (e.g. devin-…) after createSession. */
   externalSessionId?: string;
   externalSessionUrl?: string;
-  /** Dedupe key for the last agent question mirrored to chat (event id / activity id / synthetic). */
+  /** Dedupe key for the last agent question mirrored to chat (event id / synthetic). */
   lastMirroredAgentMessageKey?: string;
 }
-
-export type ResolveAgentContext = {
-  triggeringMessageText: string;
-  accumulatedPrompt: string;
-  slots: Record<string, string>;
-};
-
-export type ResolveAgentFn = (ctx: ResolveAgentContext) => AgentName | null;
-
-export type JulesSourceContext = {
-  sourceResourceName: string;
-  startingBranch: string;
-};
-
-export type ResolveJulesSourceContext = {
-  threadId: string;
-  channelId: string;
-  accumulatedPrompt: string;
-  slots: Record<string, string>;
-};
-
-export type ResolveJulesSourceFn = (
-  ctx: ResolveJulesSourceContext,
-) => Promise<JulesSourceContext | null>;
 
 export type PrereqStatus = "ready" | "need_more";
 
@@ -69,12 +41,6 @@ export type ValidateSessionPrereqsContext = {
   channelId: string;
   accumulatedPrompt: string;
   slots: Record<string, string>;
-  agent: AgentName;
-  /** Resolved when `agent === "jules"`; nulls if not yet known. */
-  jules: {
-    sourceResourceName: string | null;
-    startingBranch: string | null;
-  };
 };
 
 export type ValidateSessionPrereqsFn = (
@@ -132,41 +98,9 @@ export interface DevinBackend {
   sendSessionMessage(sessionId: string, message: string): Promise<void>;
 }
 
-/** Jules session.state enum strings from API. */
-export type JulesSessionSnapshot = {
-  sessionId: string;
-  name: string;
-  url: string;
-  state: string;
-};
-
-export type JulesActivity = {
-  id: string;
-  description?: string;
-  agentMessaged?: { agentMessage?: string };
-  planGenerated?: unknown;
-  sessionFailed?: { reason?: string };
-};
-
-export interface JulesBackend {
-  createSession(input: {
-    prompt: string;
-    sourceResourceName: string;
-    startingBranch: string;
-    title?: string;
-    automationMode?: string;
-  }): Promise<SessionResult>;
-  getSession(sessionId: string): Promise<JulesSessionSnapshot>;
-  listActivities(
-    sessionId: string,
-    pageToken?: string,
-  ): Promise<{ activities: JulesActivity[]; nextPageToken?: string }>;
-  sendSessionMessage(sessionId: string, prompt: string): Promise<void>;
-}
-
 export type DispatchResult =
-  | { ok: true; agent: AgentName; session: SessionResult }
-  | { ok: false; agent: AgentName; error: string };
+  | { ok: true; session: SessionResult }
+  | { ok: false; error: string };
 
 export type AgentPollOptions = {
   /** Delay between polls in ms (default 3000). */

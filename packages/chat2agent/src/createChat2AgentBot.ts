@@ -3,15 +3,11 @@ import type { Adapter, ChatConfig, Thread } from "chat";
 import { processTurn } from "./processTurn.js";
 import type { ProcessTurnConfig } from "./processTurn.js";
 import type {
-  AgentName,
   AgentPollOptions,
   Chat2AgentThreadState,
   DevinBackend,
   DispatchResult,
-  JulesBackend,
   MergeUserReplyFn,
-  ResolveAgentFn,
-  ResolveJulesSourceFn,
   ValidateSessionPrereqsFn,
 } from "./types.js";
 
@@ -22,25 +18,16 @@ const defaultMergeUserReply: MergeUserReplyFn = (_state, message) => ({
 export type Chat2AgentBotConfig<TAdapters extends Record<string, Adapter>> = {
   /** Passed to `new Chat({ ... })` — include `userName`, `adapters`, `state`, etc. */
   chat: ChatConfig<TAdapters>;
-  defaultAgent: AgentName;
-  resolveAgent: ResolveAgentFn;
-  /**
-   * Required when routing to Jules — return `sources/{id}` resource name and branch.
-   * @see https://developers.google.com/jules/api/reference/rest/v1alpha/sources
-   */
-  resolveJulesSource?: ResolveJulesSourceFn;
+  /** Devin session API — required. */
+  devin: DevinBackend;
   /**
    * Return `ready` when `createSession` prerequisites are met, else `need_more` with a prompt.
-   * Typically only Jules source/branch and similar API-required fields — not subjective task quality.
+   * Typically only API-required fields — not subjective task quality.
    */
   validateSessionPrereqs: ValidateSessionPrereqsFn;
   mergeUserReply?: MergeUserReplyFn;
   /** Max prereq prompts before createSession (default 5). */
   maxClarificationRounds?: number;
-  agents: {
-    devin?: DevinBackend;
-    jules?: JulesBackend;
-  };
   /** Map slots to Devin `repos` array (optional). Default: `slots.devin_repos` split by comma. */
   getDevinRepos?: (slots: Record<string, string>) => string[] | undefined;
   /** User-facing success line(s) after a session is created. */
@@ -72,7 +59,7 @@ export function createChat2AgentBot<TAdapters extends Record<string, Adapter>>(
   const formatDispatchSuccess =
     config.formatDispatchSuccess ??
     ((r: Extract<DispatchResult, { ok: true }>) =>
-      `Started **${r.agent}** session: ${r.session.url} (id: \`${r.session.id}\`)`);
+      `Started **Devin** session: ${r.session.url} (id: \`${r.session.id}\`)`);
 
   const formatAbortMessage =
     config.formatAbortMessage ??
@@ -80,13 +67,10 @@ export function createChat2AgentBot<TAdapters extends Record<string, Adapter>>(
       `I still need the following to continue: ${missing.join(", ")}. Please start a new @mention with the details.`);
 
   const turnConfig: ProcessTurnConfig = {
-    defaultAgent: config.defaultAgent,
-    resolveAgent: config.resolveAgent,
-    resolveJulesSource: config.resolveJulesSource,
+    devin: config.devin,
     validateSessionPrereqs: config.validateSessionPrereqs,
     mergeUserReply,
     maxPrereqPromptRounds,
-    agents: config.agents,
     getDevinRepos:
       config.getDevinRepos ??
       ((slots) => {
