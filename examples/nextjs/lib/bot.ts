@@ -8,8 +8,6 @@ import {
   type SessionPrereqResult,
   type ValidateSessionPrereqsContext,
 } from "chat2agent";
-import { createPollQueue } from "./poll-queue";
-
 function scheduleBackgroundWork(fn: () => void | Promise<void>) {
   after(() => fn());
 }
@@ -24,7 +22,7 @@ function validateSessionPrereqs(
   return { status: "ready" };
 }
 
-/** Shared Devin client for webhooks and Cron polling. */
+/** Shared Devin client for webhooks. */
 export function createDevinClient(): DevinBackend | undefined {
   if (!process.env.DEVIN_API_KEY || !process.env.DEVIN_ORG_ID) return undefined;
   return createDevinBackend({
@@ -51,10 +49,6 @@ function missingDevinBackend(): DevinBackend {
 function buildBot() {
   const devin = createDevinClient() ?? missingDevinBackend();
 
-  const pollQueue = createPollQueue();
-  const useCronPoll =
-    process.env.CHAT2AGENT_USE_CRON_POLL === "1" && pollQueue != null;
-
   return createChat2AgentBot({
     chat: {
       userName: process.env.BOT_USER_NAME ?? "chat2agent",
@@ -76,12 +70,7 @@ function buildBot() {
     },
     maxClarificationRounds:
       Number(process.env.CHAT2AGENT_MAX_CLARIFICATION ?? "5") || 5,
-    scheduleBackgroundWork: useCronPoll ? undefined : scheduleBackgroundWork,
-    onAgentRunning: useCronPoll
-      ? async (thread) => {
-          await pollQueue!.enqueue(thread.toJSON());
-        }
-      : undefined,
+    scheduleBackgroundWork,
   });
 }
 

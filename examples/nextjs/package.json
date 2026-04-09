@@ -11,7 +11,6 @@
   "dependencies": {
     "@chat-adapter/slack": "^4.24.0",
     "@chat-adapter/state-memory": "^4.24.0",
-    "@upstash/redis": "^1.35.0",
     "chat": "^4.24.0",
     "chat2agent": "workspace:*",
     "next": "^15.2.4",
