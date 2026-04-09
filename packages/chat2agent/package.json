@@ -1,7 +1,7 @@
 {
   "name": "chat2agent",
   "version": "0.1.0",
-  "description": "Slack/Discord mentions to Devin/Jules via Vercel Chat SDK",
+  "description": "Slack mentions to Devin sessions via Vercel Chat SDK",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",

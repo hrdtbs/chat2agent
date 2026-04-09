@@ -3,8 +3,7 @@ export default function Home() {
     <main>
       <h1>chat2agent example</h1>
       <p>
-        Webhooks: <code>/api/webhooks/slack</code>,{" "}
-        <code>/api/webhooks/discord</code>
+        Webhook: <code>/api/webhooks/slack</code>
       </p>
     </main>
   );
